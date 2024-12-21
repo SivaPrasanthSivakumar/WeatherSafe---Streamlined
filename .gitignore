@@ -1,0 +1,5 @@
+Documentation/
+Programs/WeatherSafeApp/localhost-key.pem
+Programs/WeatherSafeApp/localhost.pem
+node_modules/
+.tmp.driveupload/

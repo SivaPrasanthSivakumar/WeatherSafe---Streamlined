@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeatherSafe</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1><b>WeatherSafe ☀️🌧️</b></h1>
+      <div>
+        <h3>Location: <span id="location">Loading...</span></h3>
+      </div>
+      <div class="search-bar">
+        <input
+          type="text"
+          id="city"
+          placeholder="Enter city"
+          onkeypress="handleKeyPress(event)"
+        />
+        <input
+          type="text"
+          id="state"
+          placeholder="Enter state"
+          onkeypress="handleKeyPress(event)"
+        />
+        <button onclick="searchWeather()">Search</button>
+      </div>
+      <div>
+        <h4 onclick="toggleSection('forecast')">
+          <span class="arrow">&#9654;</span> Weather Forecast 🌤️
+        </h4>
+        <div id="forecast" class="collapsible-content"></div>
+      </div>
+      <div>
+        <h4 onclick="toggleSection('alerts')">
+          <span class="arrow">&#9654;</span> Weather Alerts ⚠️
+        </h4>
+        <div id="alerts" class="collapsible-content"></div>
+      </div>
+      <div id="random-fact" class="fact">
+        <h4>Did you know? 🤔</h4>
+        <p>Loading a fun weather fact...</p>
+      </div>
+    </div>
+    <script>
+      async function fetchWeather() {
+        try {
+          const ipResponse = await fetch("https://api.ipify.org?format=json");
+          const ipData = await ipResponse.json();
+          console.log("IP Data:", ipData);
+
+          const response = await fetch(
+            `https://localhost:3000/user-weather?ip=${ipData.ip}`
+          );
+          const data = await response.json();
+
+          if (data.error) {
+            document.getElementById("location").textContent =
+              "Unable to determine location";
+            return;
+          }
+
+          const { city, state } = data.location;
+          document.getElementById("location").textContent = `${city}, ${state}`;
+
+          displayWeather(data.alerts, data.forecast);
+          notifyMajorAlerts(data.alerts);
+        } catch (error) {
+          console.error("Error fetching weather data:", error);
+          document.getElementById("location").textContent =
+            "Error fetching data";
+        }
+      }
+
+      async function searchWeather() {
+        const city = document.getElementById("city").value;
+        const state = document.getElementById("state").value;
+
+        if (!city || !state) {
+          alert("Please enter both city and state");
+          return;
+        }
+
+        document.getElementById("location").textContent = "Loading...";
+
+        try {
+          const alertsResponse = await fetch(
+            `/alerts?city=${city}&state=${state}`
+          );
+          const alertsData = await alertsResponse.json();
+          const forecastResponse = await fetch(
+            `/weather?city=${city}&state=${state}`
+          );
+          const forecastData = await forecastResponse.json();
+
+          document.getElementById("location").textContent = `${city}, ${state}`;
+          displayWeather(alertsData.alerts, forecastData.forecast);
+          notifyMajorAlerts(alertsData.alerts);
+        } catch (error) {
+          console.error("Error searching weather data:", error);
+          document.getElementById("location").textContent =
+            "Error fetching data";
+        }
+      }
+
+      function notifyMajorAlerts(alerts) {
+        if (Notification.permission !== "granted") {
+          alert("Please enable notifications to receive weather alerts.");
+          Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+              fetchWeather();
+            }
+          });
+        }
+
+        let redAlert = false;
+        let yellowAlert = false;
+        alerts.forEach((alert) => {
+          const redLabels = ["Extreme", "Severe"];
+          const yellowLabels = ["Moderate", "Minor"];
+          if (redLabels.includes(alert.severity)) {
+            redAlert = true;
+          } else if (yellowLabels.includes(alert.severity)) {
+            yellowAlert = true;
+          }
+        });
+
+        if (redAlert) {
+          console.log("Red alert");
+          if (Notification.permission !== "granted") {
+            alert(
+              "There is a red weather alert in your area.\nYou may need to relocate to a safer area!\nPlease scroll down to the alerts section to see more details."
+            );
+          } else {
+            new Notification("Extreme Weather Alert", {
+              body: "There is a red weather alert in your area.\nYou may need to relocate to a safer area!\nPlease scroll down to the alerts section to see more details.",
+            });
+          }
+        } else if (yellowAlert) {
+          console.log("Yellow alert");
+          if (Notification.permission !== "granted") {
+            alert(
+              "There is a yellow weather alert in your area.\nStay safe and take precautionary measures.\nPlease scroll down to the alerts section to see more details."
+            );
+          } else {
+            new Notification("Weather Alert", {
+              body: "There is a yellow weather alert in your area.\nStay safe and take precautionary measures.\nPlease scroll down to the alerts section to see more details.",
+            });
+          }
+        }
+      }
+
+      function displayWeather(alerts, forecast) {
+        console.log("Forecast:", forecast);
+        console.log("Alerts:", alerts);
+        const forecastContainer = document.getElementById("forecast");
+        forecastContainer.innerHTML = "";
+        if (forecast && forecast.length > 0) {
+          forecast.forEach((period) => {
+            console.log("Period:", period);
+            const div = document.createElement("div");
+            div.classList.add("forecast");
+            div.innerHTML = `
+              <strong>${period.time}</strong>
+              <p>${period.detailedForecast}</p>
+              <small>Temp: ${period.temp} ${period.tempUnit} | Wind: ${period.windSpeed} ${period.windDir}</small>
+            `;
+            forecastContainer.appendChild(div);
+          });
+        } else {
+          forecastContainer.textContent = "No weather forecast available.";
+        }
+
+        const alertsContainer = document.getElementById("alerts");
+        alertsContainer.innerHTML = "";
+        if (alerts && alerts.length > 0) {
+          alerts.forEach((alert) => {
+            console.log("Alert:", alert);
+            const div = document.createElement("div");
+            div.classList.add("alert");
+            div.classList.add(alert.severity);
+            div.innerHTML = `
+              <strong>${alert.headline}</strong>
+              <p>${alert.description}</p>
+              <small>Area: ${alert.area} | Sent: ${alert.sent}</small>
+            `;
+            alertsContainer.appendChild(div);
+          });
+        } else {
+          alertsContainer.textContent = "No weather alerts available.";
+        }
+      }
+
+      function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        const arrow = section.previousElementSibling.querySelector(".arrow");
+        if (section.style.display === "none") {
+          section.style.display = "block";
+          arrow.innerHTML = "&#9660;";
+        } else {
+          section.style.display = "none";
+          arrow.innerHTML = "&#9654;";
+        }
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          searchWeather();
+        }
+      }
+
+      async function fetchRandomFact() {
+        try {
+          const response = await fetch("/random-fact");
+          const data = await response.json();
+          document.querySelector("#random-fact p").textContent = data.fact;
+        } catch (error) {
+          console.error("Error fetching random fact:", error);
+          document.querySelector("#random-fact p").textContent =
+            "Error loading fact.";
+        }
+      }
+
+      window.onload = () => {
+        fetchWeather();
+        document.getElementById("forecast").style.display = "none";
+        document.getElementById("alerts").style.display = "none";
+        fetchRandomFact();
+      };
+    </script>
+  </body>
+</html>

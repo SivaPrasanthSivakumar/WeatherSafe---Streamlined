@@ -44,6 +44,13 @@
         <p>Loading a fun weather fact...</p>
       </div>
     </div>
+    <div class="music-control">
+      <button onclick="toggleMusic()">Background Music 🎵</button>
+    </div>
+    <audio id="background-music" loop>
+      <source src="White Petals by Keys of Moon.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
     <script>
       async function fetchWeather() {
         try {
@@ -165,17 +172,7 @@
             div.innerHTML = `
               <strong>${period.time}</strong>
               <p>${period.detailedForecast}</p>
-              <small>Temp: ${period.temp} ${period.tempUnit} | Wind: ${
-              period.windSpeed
-            } ${period.windDir}</small>
-              <br><br>
-              <h3>Clothing Recommmendation</h3>
-              ${period.clothingRecommendation
-                .map(
-                  (rec) =>
-                    `<p>For ${rec.Gender} between ${rec.Age_Group} is ${rec.Clothing_Recommendation}</p>`
-                )
-                .join("")}
+              <small>Temp: ${period.temp} ${period.tempUnit} | Wind: ${period.windSpeed} ${period.windDir}</small>
             `;
             forecastContainer.appendChild(div);
           });
@@ -230,6 +227,15 @@
           console.error("Error fetching random fact:", error);
           document.querySelector("#random-fact p").textContent =
             "Error loading fact.";
+        }
+      }
+
+      function toggleMusic() {
+        const music = document.getElementById("background-music");
+        if (music.paused) {
+          music.play();
+        } else {
+          music.pause();
         }
       }
 

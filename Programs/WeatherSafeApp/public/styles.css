@@ -251,3 +251,24 @@ button {
 button:hover {
   transform: scale(1.05);
 }
+
+.music-control {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.music-control button {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.music-control button:hover {
+  background-color: #2980b9;
+  transform: scale(1.05);
+}

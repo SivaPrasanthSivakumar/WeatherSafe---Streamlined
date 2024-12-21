@@ -4,10 +4,10 @@ const path = require("path");
 const https = require("https");
 const app = express();
 const fs = require("fs");
-const cors = require("cors"); // Add this line
+const cors = require("cors"); 
 const port = 3000;
 
-app.use(cors()); // Add this line
+app.use(cors()); 
 app.use(express.static(path.join(__dirname, "public")));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

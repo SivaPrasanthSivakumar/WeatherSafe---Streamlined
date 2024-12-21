@@ -165,7 +165,17 @@
             div.innerHTML = `
               <strong>${period.time}</strong>
               <p>${period.detailedForecast}</p>
-              <small>Temp: ${period.temp} ${period.tempUnit} | Wind: ${period.windSpeed} ${period.windDir}</small>
+              <small>Temp: ${period.temp} ${period.tempUnit} | Wind: ${
+              period.windSpeed
+            } ${period.windDir}</small>
+              <br><br>
+              <h3>Clothing Recommmendation</h3>
+              ${period.clothingRecommendation
+                .map(
+                  (rec) =>
+                    `<p>For ${rec.Gender} between ${rec.Age_Group} is ${rec.Clothing_Recommendation}</p>`
+                )
+                .join("")}
             `;
             forecastContainer.appendChild(div);
           });

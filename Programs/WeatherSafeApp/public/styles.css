@@ -6,8 +6,8 @@
 
 body {
   font-family: "Arial", sans-serif;
-  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-  color: #333;
+  background: linear-gradient(135deg, #f6d365 10%, Blue 100%);
+  color: #000000;
   line-height: 1.6;
   padding: 20px;
   background-attachment: fixed;

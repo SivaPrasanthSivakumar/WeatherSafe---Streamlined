@@ -10,4 +10,10 @@ New Features:
 - Weather-themed background music.
 
 Directions to run the system:
-In terminal: type in `npm install` to install dependencies, and type in `npm start` to start the system.
+
+1. In terminal: type in `npm install` to install dependencies.
+2. Generate SSL certificates and place them in the `Programs/WeatherSafeApp` directory:
+   ```sh
+   openssl req -nodes -new -x509 -keyout localhost-key.pem -out localhost.pem -days 365
+   ```
+3. Type in `npm start` to start the system.

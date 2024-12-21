@@ -1,8 +1,5 @@
 # WeatherSafe
 
-Siva Prasanth Sivakumar
-Dr. Katherine Herbert-Berger
-CSIT555 Database Systems
 Description:  
  WeatherSafe system acts as an extreme weather warning system to warn the user of mild or dangerous weather conditions, along with a weather forecast functionality that displays the day, forecast description, temperature, and wind speed.
 

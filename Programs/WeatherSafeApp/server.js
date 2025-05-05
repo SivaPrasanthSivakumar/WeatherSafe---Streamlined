@@ -1,13 +1,13 @@
 const express = require("express");
 const axios = require("axios");
 const path = require("path");
-const https = require("https");
+const http = require("http");
 const app = express();
 const fs = require("fs");
-const cors = require("cors"); 
+const cors = require("cors");
 const port = 3000;
 
-app.use(cors()); 
+app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -170,13 +170,9 @@ app.get("/random-fact", (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
-const options = {
-  key: fs.readFileSync(path.join(__dirname, "localhost-key.pem")),
 
-  cert: fs.readFileSync(path.join(__dirname, "localhost.pem")),
-};
-const server = https.createServer(options, app);
+const server = http.createServer(app);
 
 server.listen(port, () => {
-  console.log(`WeatherSafe app listening at https://localhost:${port}`);
+  console.log(`WeatherSafe app listening at http://localhost:${port}`);
 });

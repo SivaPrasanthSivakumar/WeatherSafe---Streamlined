@@ -114,11 +114,15 @@ app.get("/user-weather", async (req, res) => {
     } else {
       res
         .status(500)
-        .json({ error: "Unable to fetch weather data for your location" });
+        .json({
+          error: "We couldn't determine your location. Please try again later.",
+        });
     }
   } catch (error) {
     console.error("Error in /user-weather route:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res
+      .status(500)
+      .json({ error: "Something went wrong. Please try again later." });
   }
 });
 
@@ -130,11 +134,17 @@ app.get("/alerts", async (req, res) => {
       const alerts = await getWeatherAlerts(location.lat, location.lon);
       res.json({ alerts, message: "Keep an eye on the sky!" });
     } else {
-      res.status(500).json({ error: "Unable to fetch weather alerts" });
+      res
+        .status(500)
+        .json({
+          error: "We couldn't find weather alerts for the specified location.",
+        });
     }
   } catch (error) {
     console.error("Error in /alerts route:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res
+      .status(500)
+      .json({ error: "Something went wrong. Please try again later." });
   }
 });
 
@@ -147,11 +157,17 @@ app.get("/weather", async (req, res) => {
 
       res.json({ forecast, message: "Enjoy your day, rain or shine!" });
     } else {
-      res.status(500).json({ error: "Unable to fetch weather forecast" });
+      res
+        .status(500)
+        .json({
+          error: "We couldn't find weather data for the specified location.",
+        });
     }
   } catch (error) {
     console.error("Error in /weather route:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res
+      .status(500)
+      .json({ error: "Something went wrong. Please try again later." });
   }
 });
 

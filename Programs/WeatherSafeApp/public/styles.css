@@ -5,97 +5,102 @@
 }
 
 body {
-  font-family: "Arial", sans-serif;
-  background: linear-gradient(135deg, #f6d365 10%, Blue 100%);
-  color: #000000;
+  font-family: "Roboto", sans-serif;
+  background: linear-gradient(135deg, #74ebd5, #acb6e5);
+  color: #333;
   line-height: 1.6;
-  padding: 20px;
+  padding: 2%;
   background-attachment: fixed;
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 90%;
   margin: 0 auto;
-  background-color: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 30px;
+  background-color: #ffffff;
+  padding: 3%;
+  border-radius: 1em;
+  box-shadow: 0 0.8em 2em rgba(0, 0, 0, 0.2);
+  margin-top: 3%;
   animation: fadeIn 1s ease-in-out;
 }
 
 h1 {
-  font-size: 2.5rem;
-  color: #3498db;
+  font-size: 3em;
+  color: #4a90e2;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 2%;
   font-weight: 700;
-  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+  text-shadow: 0.1em 0.1em 0.4em rgba(0, 0, 0, 0.1);
 }
 
 h2,
 h3 {
   color: #34495e;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 1%;
 }
 
 #location {
-  font-size: 1.4rem;
+  font-size: 1.4em;
   font-weight: bold;
   color: #2ecc71;
-  margin-top: 10px;
+  margin-top: 1%;
 }
 
 .search-bar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  margin: 30px 0;
-  background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  margin: 2% 0;
+  background-color: #f7f9fc;
+  padding: 1.5%;
+  border-radius: 1em;
+  box-shadow: 0 0.4em 1em rgba(0, 0, 0, 0.1);
 }
 
 .search-bar input {
-  padding: 12px;
-  width: 45%;
-  border: 2px solid #3498db;
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: 1.2em;
+  margin-bottom: 3%;
+  width: 48%;
+  border: 0.2em solid #4a90e2;
+  border-radius: 0.8em;
+  font-size: 1em;
   outline: none;
   transition: border 0.3s ease;
 }
 
 .search-bar input:focus {
-  border-color: #2980b9;
+  border-color: #357ab7;
 }
 
 .search-bar button {
-  padding: 12px 25px;
-  background-color: #2980b9;
+  width: 80%;
+  height: 80%;
+  padding: 1.8em 1.5em;
+  background-color: #4a90e2;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: 1rem;
+  border-radius: 0.8em;
+  font-size: 1em;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
-  width: 45%;
+  align-self: center;
+  margin: 0 auto;
 }
 
 .search-bar button:hover {
-  background-color: #3498db;
+  background-color: #357ab7;
   transform: scale(1.05);
 }
 
 .alert,
 .forecast {
-  margin: 20px 0;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #fafafa;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin: 2% 0;
+  padding: 2%;
+  border-radius: 1em;
+  border: 0.1em solid #ddd;
+  background-color: #f9f9f9;
+  box-shadow: 0 0.4em 0.8em rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
   animation: slideIn 0.5s ease-in-out;
 }
@@ -106,61 +111,35 @@ h3 {
 }
 
 .alert {
-  border-left: 6px solid #6de73c;
-  padding: 15px;
-  margin: 20px 0;
-  font-size: 1rem;
-  line-height: 1.4;
-  white-space: pre-line;
+  border-left: 0.6em solid #ff6b6b;
 }
 
 .forecast {
-  border-left: 6px solid #3498db;
+  border-left: 0.6em solid #4a90e2;
 }
 
 .alert strong,
 .forecast strong {
-  font-size: 1.2rem;
+  font-size: 1.2em;
   color: #2c3e50;
   font-weight: 600;
 }
 
-.alert strong {
-  font-size: 1.2rem;
-  color: #2c3e50;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 10px;
-}
-
 .alert p,
 .forecast p {
-  font-size: 1rem;
+  font-size: 1em;
   color: #555;
-}
-
-.alert p {
-  font-size: 1rem;
-  color: #555;
-  margin-bottom: 10px;
 }
 
 .alert small,
 .forecast small {
-  font-size: 0.9rem;
-  color: #10747b;
-}
-
-.alert small {
-  font-size: 0.7rem;
-  color: #10747b;
-  display: block;
-  margin-top: 10px;
+  font-size: 0.9em;
+  color: #888;
 }
 
 .alert + .alert,
 .forecast + .forecast {
-  margin-top: 20px;
+  margin-top: 2%;
 }
 
 @media (max-width: 768px) {
@@ -172,11 +151,11 @@ h3 {
   .search-bar input,
   .search-bar button {
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 1%;
   }
 
   .container {
-    padding: 20px;
+    padding: 2%;
   }
 }
 
@@ -199,10 +178,10 @@ h3 {
 .collapsible-content {
   display: none;
   transition: max-height 0.2s ease-out;
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
+  border: 0.1em solid #ccc;
+  padding: 1%;
+  margin-top: 1%;
+  border-radius: 0.8em;
   background-color: #f9f9f9;
 }
 
@@ -210,17 +189,17 @@ h4 {
   cursor: pointer;
   display: flex;
   align-items: center;
-  font-size: 1.2rem;
-  margin-top: 20px;
+  font-size: 1.4em;
+  margin-top: 2%;
   transition: color 0.3s ease;
 }
 
 h4:hover {
-  color: #2980b9;
+  color: #4a90e2;
 }
 
 .arrow {
-  margin-right: 10px;
+  margin-right: 1%;
   transition: transform 0.2s ease;
 }
 
@@ -254,21 +233,21 @@ button:hover {
 
 .music-control {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 2%;
 }
 
 .music-control button {
-  padding: 10px 20px;
-  background-color: #3498db;
+  padding: 1em 2em;
+  background-color: #4a90e2;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: 1rem;
+  border-radius: 0.8em;
+  font-size: 1em;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .music-control button:hover {
-  background-color: #2980b9;
+  background-color: #357ab7;
   transform: scale(1.05);
 }

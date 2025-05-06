@@ -10,6 +10,7 @@ WeatherSafe is an extreme weather warning system that alerts users about mild or
 - Fun weather facts to keep users engaged.
 - Interactive UI elements with animations.
 - Weather-themed background music.
+- **Optimized for responsiveness and faster loading with caching.**
 
 ## Installation
 

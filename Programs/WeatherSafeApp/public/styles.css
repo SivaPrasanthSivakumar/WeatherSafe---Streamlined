@@ -6,7 +6,7 @@
 
 body {
   font-family: "Roboto", sans-serif;
-  background: linear-gradient(135deg, #74ebd5, #acb6e5);
+  background: linear-gradient(135deg, #74ebd5, #acb6e5) fixed;
   color: #333;
   line-height: 1.6;
   padding: 2%;
@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width: 90%;
+  max-width: 100%;
   margin: 0 auto;
   background-color: #ffffff;
   padding: 3%;
@@ -151,11 +151,12 @@ h3 {
   .search-bar input,
   .search-bar button {
     width: 100%;
-    margin-bottom: 1%;
+    margin-bottom: 2%;
   }
 
   .container {
     padding: 2%;
+    margin-top: 5%;
   }
 }
 

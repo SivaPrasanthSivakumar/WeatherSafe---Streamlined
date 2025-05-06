@@ -8,7 +8,7 @@ const cors = require("cors");
 const port = 3000;
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: "1d" }));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -112,11 +112,9 @@ app.get("/user-weather", async (req, res) => {
         message: "Stay safe and have a great day!",
       });
     } else {
-      res
-        .status(500)
-        .json({
-          error: "We couldn't determine your location. Please try again later.",
-        });
+      res.status(500).json({
+        error: "We couldn't determine your location. Please try again later.",
+      });
     }
   } catch (error) {
     console.error("Error in /user-weather route:", error.message);
@@ -134,11 +132,9 @@ app.get("/alerts", async (req, res) => {
       const alerts = await getWeatherAlerts(location.lat, location.lon);
       res.json({ alerts, message: "Keep an eye on the sky!" });
     } else {
-      res
-        .status(500)
-        .json({
-          error: "We couldn't find weather alerts for the specified location.",
-        });
+      res.status(500).json({
+        error: "We couldn't find weather alerts for the specified location.",
+      });
     }
   } catch (error) {
     console.error("Error in /alerts route:", error.message);
@@ -157,11 +153,9 @@ app.get("/weather", async (req, res) => {
 
       res.json({ forecast, message: "Enjoy your day, rain or shine!" });
     } else {
-      res
-        .status(500)
-        .json({
-          error: "We couldn't find weather data for the specified location.",
-        });
+      res.status(500).json({
+        error: "We couldn't find weather data for the specified location.",
+      });
     }
   } catch (error) {
     console.error("Error in /weather route:", error.message);

@@ -2,43 +2,38 @@
   "version": 2,
   "builds": [
     {
-      "src": "Programs/WeatherSafeApp/server.js",
+      "src": "server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/user-weather",
-      "dest": "Programs/WeatherSafeApp/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/alerts",
-      "dest": "Programs/WeatherSafeApp/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/weather",
-      "dest": "Programs/WeatherSafeApp/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/api/random-fact",
-      "dest": "Programs/WeatherSafeApp/server.js"
+      "dest": "server.js"
     },
     {
       "src": "/styles.css",
-      "dest": "Programs/WeatherSafeApp/public/styles.css"
+      "dest": "public/styles.css"
     },
     {
       "src": "/White Petals by Keys of Moon.mp3",
-      "dest": "Programs/WeatherSafeApp/public/White Petals by Keys of Moon.mp3"
+      "dest": "public/White Petals by Keys of Moon.mp3"
     },
     {
       "src": "/(.*)",
-      "dest": "Programs/WeatherSafeApp/public/index.html"
+      "dest": "public/index.html"
     }
-  ],
-  "functions": {
-    "Programs/WeatherSafeApp/server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }

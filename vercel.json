@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Programs/WeatherSafeApp/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "Programs/WeatherSafeApp/public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "Programs/WeatherSafeApp/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "Programs/WeatherSafeApp/public/$1"
+    }
+  ],
+  "functions": {
+    "Programs/WeatherSafeApp/server.js": {
+      "maxDuration": 10
+    }
+  }
+}

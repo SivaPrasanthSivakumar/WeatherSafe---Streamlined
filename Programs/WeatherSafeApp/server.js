@@ -97,7 +97,7 @@ async function getWeatherForecast(latitude, longitude) {
   }
 }
 
-app.get("/user-weather", async (req, res) => {
+app.get("/api/user-weather", async (req, res) => {
   try {
     const location = await getLocationFromIP(req.query.ip);
     if (location) {
@@ -124,7 +124,7 @@ app.get("/user-weather", async (req, res) => {
   }
 });
 
-app.get("/alerts", async (req, res) => {
+app.get("/api/alerts", async (req, res) => {
   try {
     const { city, state } = req.query;
     const location = await getLatLonFromCityState(city, state);
@@ -144,7 +144,7 @@ app.get("/alerts", async (req, res) => {
   }
 });
 
-app.get("/weather", async (req, res) => {
+app.get("/api/weather", async (req, res) => {
   try {
     const { city, state } = req.query;
     const location = await getLatLonFromCityState(city, state);
@@ -165,7 +165,7 @@ app.get("/weather", async (req, res) => {
   }
 });
 
-app.get("/random-fact", (req, res) => {
+app.get("/api/random-fact", (req, res) => {
   const facts = [
     "The highest temperature ever recorded on Earth was 134°F (56.7°C) in Death Valley, California.",
     "The coldest temperature ever recorded on Earth was -128.6°F (-89.2°C) at Vostok Station in Antarctica.",

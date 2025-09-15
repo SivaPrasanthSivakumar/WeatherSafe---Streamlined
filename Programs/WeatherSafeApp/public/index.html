@@ -35,13 +35,27 @@
         <button onclick="searchWeather()">Search</button>
       </div>
       <div>
-        <h4 onclick="toggleSection('forecast')">
+        <h4
+          onclick="toggleSection('forecast')"
+          tabindex="0"
+          role="button"
+          aria-expanded="false"
+          aria-controls="forecast"
+          onkeydown="handleSectionKey(event, 'forecast')"
+        >
           <span class="arrow">&#9654;</span> Weather Forecast 🌤️
         </h4>
         <div id="forecast" class="collapsible-content"></div>
       </div>
       <div>
-        <h4 onclick="toggleSection('alerts')">
+        <h4
+          onclick="toggleSection('alerts')"
+          tabindex="0"
+          role="button"
+          aria-expanded="false"
+          aria-controls="alerts"
+          onkeydown="handleSectionKey(event, 'alerts')"
+        >
           <span class="arrow">&#9654;</span> Weather Alerts ⚠️
         </h4>
         <div id="alerts" class="collapsible-content"></div>
@@ -204,13 +218,24 @@
 
       function toggleSection(sectionId) {
         const section = document.getElementById(sectionId);
-        const arrow = section.previousElementSibling.querySelector(".arrow");
-        if (section.style.display === "none") {
+        const header = section.previousElementSibling;
+        const arrow = header.querySelector(".arrow");
+        const isOpen = section.style.display === "block";
+        if (!isOpen) {
           section.style.display = "block";
           arrow.innerHTML = "&#9660;";
+          header.setAttribute("aria-expanded", "true");
         } else {
           section.style.display = "none";
           arrow.innerHTML = "&#9654;";
+          header.setAttribute("aria-expanded", "false");
+        }
+      }
+
+      function handleSectionKey(event, sectionId) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggleSection(sectionId);
         }
       }
 
@@ -245,6 +270,13 @@
         fetchWeather();
         document.getElementById("forecast").style.display = "none";
         document.getElementById("alerts").style.display = "none";
+        // Set ARIA attributes for initial state
+        document
+          .querySelector("h4[aria-controls='forecast']")
+          .setAttribute("aria-expanded", "false");
+        document
+          .querySelector("h4[aria-controls='alerts']")
+          .setAttribute("aria-expanded", "false");
         fetchRandomFact();
       };
     </script>

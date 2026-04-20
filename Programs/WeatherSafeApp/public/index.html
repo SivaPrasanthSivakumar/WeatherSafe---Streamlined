@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -99,7 +99,7 @@
 
         if (!city || !state) {
           alert(
-            "Please enter both city and state to search for weather information."
+            "Please enter both city and state to search for weather information.",
           );
           return;
         }
@@ -108,77 +108,90 @@
 
         try {
           const alertsResponse = await fetch(
-            `/api/alerts?city=${city}&state=${state}`
+            `/api/alerts?city=${city}&state=${state}`,
           );
+          if (!alertsResponse.ok) {
+            throw new Error(`Alerts API error: ${alertsResponse.statusText}`);
+          }
           const alertsData = await alertsResponse.json();
+          console.log("Raw Alerts API Response:", alertsData);
+
           const forecastResponse = await fetch(
-            `/api/weather?city=${city}&state=${state}`
+            `/api/weather?city=${city}&state=${state}`,
           );
+          if (!forecastResponse.ok) {
+            throw new Error(
+              `Forecast API error: ${forecastResponse.statusText}`,
+            );
+          }
           const forecastData = await forecastResponse.json();
+          console.log("Raw Forecast API Response:", forecastData);
+
+          // Validate API response structure
+          const alerts = Array.isArray(alertsData.alerts)
+            ? alertsData.alerts
+            : [];
+          console.log("Validated Alerts Data:", alerts);
+          const forecast = Array.isArray(forecastData.forecast)
+            ? forecastData.forecast
+            : [];
+          console.log("Validated Forecast Data:", forecast);
+
+          if (alerts.length === 0 && forecast.length === 0) {
+            throw new Error("No valid weather data received.");
+          }
 
           document.getElementById("location").textContent = `${city}, ${state}`;
-          displayWeather(alertsData.alerts, forecastData.forecast);
-          notifyMajorAlerts(alertsData.alerts);
+          displayWeather(alerts, forecast);
+          notifyMajorAlerts(alerts);
         } catch (error) {
           console.error("Error searching weather data:", error);
           document.getElementById("location").textContent =
-            "Error fetching data. Please try again later.";
+            `Error fetching data: ${error.message}. Please try again later.`;
         }
       }
 
       function notifyMajorAlerts(alerts) {
+        console.log("Alerts passed to notifyMajorAlerts:", alerts);
+        if (!Array.isArray(alerts) || alerts.length === 0) {
+          console.warn("No valid alerts to process in notifyMajorAlerts.");
+          return;
+        }
+
         if (Notification.permission !== "granted") {
-          alert("Please enable notifications to receive weather alerts.");
-          Notification.requestPermission().then((permission) => {
-            if (permission === "granted") {
-              fetchWeather();
-            }
-          });
+          console.warn("Notifications are not enabled.");
+          return;
         }
 
         let redAlert = false;
         let yellowAlert = false;
         alerts.forEach((alert) => {
-          const redLabels = ["Extreme", "Severe"];
-          const yellowLabels = ["Moderate", "Minor"];
-          if (redLabels.includes(alert.severity)) {
+          console.log("Processing alert:", alert);
+          if (alert.severity === "Severe" || alert.severity === "Extreme") {
             redAlert = true;
-          } else if (yellowLabels.includes(alert.severity)) {
+          } else if (alert.severity === "Moderate") {
             yellowAlert = true;
           }
         });
 
         if (redAlert) {
-          console.log("Red alert");
-          if (Notification.permission !== "granted") {
-            alert(
-              "There is a red weather alert in your area.\nYou may need to relocate to a safer area!\nPlease scroll down to the alerts section to see more details."
-            );
-          } else {
-            new Notification("Extreme Weather Alert", {
-              body: "There is a red weather alert in your area.\nYou may need to relocate to a safer area!\nPlease scroll down to the alerts section to see more details.",
-            });
-          }
+          new Notification("Severe Weather Alert!", {
+            body: "Severe weather conditions detected in your area. Stay safe!",
+          });
         } else if (yellowAlert) {
-          console.log("Yellow alert");
-          if (Notification.permission !== "granted") {
-            alert(
-              "There is a yellow weather alert in your area.\nStay safe and take precautionary measures.\nPlease scroll down to the alerts section to see more details."
-            );
-          } else {
-            new Notification("Weather Alert", {
-              body: "There is a yellow weather alert in your area.\nStay safe and take precautionary measures.\nPlease scroll down to the alerts section to see more details.",
-            });
-          }
+          new Notification("Moderate Weather Alert", {
+            body: "Moderate weather conditions detected. Stay cautious!",
+          });
         }
       }
 
       function displayWeather(alerts, forecast) {
         console.log("Forecast:", forecast);
         console.log("Alerts:", alerts);
+
         const forecastContainer = document.getElementById("forecast");
         forecastContainer.innerHTML = "";
-        if (forecast && forecast.length > 0) {
+        if (Array.isArray(forecast) && forecast.length > 0) {
           forecast.forEach((period) => {
             console.log("Period:", period);
             const div = document.createElement("div");
@@ -196,16 +209,15 @@
 
         const alertsContainer = document.getElementById("alerts");
         alertsContainer.innerHTML = "";
-        if (alerts && alerts.length > 0) {
+        if (Array.isArray(alerts) && alerts.length > 0) {
           alerts.forEach((alert) => {
             console.log("Alert:", alert);
             const div = document.createElement("div");
             div.classList.add("alert");
-            div.classList.add(alert.severity);
             div.innerHTML = `
               <strong>${alert.headline}</strong>
               <p>${alert.description}</p>
-              <small>Area: ${alert.area} | Sent: ${alert.sent}</small>
+              <small>Area: ${alert.area} | Severity: ${alert.severity} | Sent: ${alert.sent}</small>
             `;
             alertsContainer.appendChild(div);
           });

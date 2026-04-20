@@ -33,6 +33,7 @@ WeatherSafe is an extreme weather warning system that alerts users about mild or
 Start the application:
 
 ```sh
+ cd WeatherSafe---Streamlined
 npm start
 ```
 

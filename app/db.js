@@ -2,15 +2,64 @@ const mysql = require("mysql2/promise");
 const fs = require("fs");
 const path = require("path");
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "weathersafe_db",
+const DB_HOST = process.env.DB_HOST || "localhost";
+const DB_USER = process.env.DB_USER || null;
+const DB_PASSWORD = process.env.DB_PASSWORD || null;
+const DB_NAME = process.env.DB_NAME || null;
+const DB_SSL = (process.env.DB_SSL || "false").toLowerCase() === "true";
+const DB_SSL_CA = process.env.DB_SSL_CA || null; // path to CA file (optional)
+const DB_SSL_REJECT_UNAUTHORIZED =
+  process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false";
+const DB_CONNECTION_LIMIT = process.env.DB_CONNECTION_LIMIT
+  ? parseInt(process.env.DB_CONNECTION_LIMIT, 10)
+  : 10;
+const DB_QUEUE_LIMIT = process.env.DB_QUEUE_LIMIT
+  ? parseInt(process.env.DB_QUEUE_LIMIT, 10)
+  : 100;
+
+if (!DB_PASSWORD) {
+  console.error(
+    "Environment variable DB_PASSWORD is required but not set. Aborting startup.",
+  );
+  process.exit(1);
+}
+if (!DB_USER) {
+  console.error(
+    "Environment variable DB_USER is required but not set. Aborting startup.",
+  );
+  process.exit(1);
+}
+if (!DB_NAME) {
+  console.error(
+    "Environment variable DB_NAME is required but not set. Aborting startup.",
+  );
+  process.exit(1);
+}
+
+const poolConfig = {
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+  connectionLimit: isNaN(DB_CONNECTION_LIMIT) ? 10 : DB_CONNECTION_LIMIT,
+  queueLimit: isNaN(DB_QUEUE_LIMIT) ? 100 : DB_QUEUE_LIMIT,
+};
+
+if (DB_SSL) {
+  poolConfig.ssl = {};
+  if (DB_SSL_CA) {
+    try {
+      poolConfig.ssl.ca = fs.readFileSync(DB_SSL_CA, "utf8");
+    } catch (err) {
+      console.error("Failed to read DB_SSL_CA file:", err && err.message);
+      process.exit(1);
+    }
+  }
+  poolConfig.ssl.rejectUnauthorized = !!DB_SSL_REJECT_UNAUTHORIZED;
+}
+
+const pool = mysql.createPool(poolConfig);
 
 const logPath = path.join(__dirname, "db_errors.log");
 
@@ -108,4 +157,56 @@ async function saveUsage({
   }
 }
 
-module.exports = { pool, saveUsage, logDbError };
+let _poolClosed = false;
+
+async function closePool() {
+  if (_poolClosed) return;
+  _poolClosed = true;
+  try {
+    await pool.end();
+    console.log("Database pool closed gracefully.");
+  } catch (err) {
+    try {
+      await logDbError("Error closing database pool", err);
+    } catch (e) {
+      console.error("Failed to log DB pool close error:", e);
+    }
+  }
+}
+
+// Wire graceful shutdown handlers. Idempotent via _poolClosed guard.
+process.on("SIGINT", async () => {
+  try {
+    await closePool();
+  } finally {
+    process.exit(0);
+  }
+});
+
+process.on("SIGTERM", async () => {
+  try {
+    await closePool();
+  } finally {
+    process.exit(0);
+  }
+});
+
+process.on("beforeExit", async () => {
+  await closePool();
+});
+
+// 'exit' cannot be async/await; attempt to close but don't block exit.
+process.on("exit", () => {
+  if (!_poolClosed) {
+    pool.end().catch((err) => {
+      // best-effort logging — cannot await here
+      console.error(
+        "Error closing pool during exit:",
+        err && (err.message || err),
+      );
+    });
+    _poolClosed = true;
+  }
+});
+
+module.exports = { pool, saveUsage, logDbError, closePool };

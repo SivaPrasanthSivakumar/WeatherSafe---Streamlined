@@ -1,5 +1,7 @@
 # WeatherSafe
 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Node.js](https://img.shields.io/badge/node-%3E%3D16-brightgreen.svg)]
+
 WeatherSafe is a lightweight Node.js + Express application that fetches live weather forecasts and official weather alerts for a user's location and provides a simple UI and REST endpoints for accessing that data.
 
 **Key features**
@@ -12,6 +14,7 @@ WeatherSafe is a lightweight Node.js + Express application that fetches live wea
 ## Prerequisites
 
 - Node.js 16+ and npm
+- (Optional) Add an `engines` field to `package.json` to require Node >=16 for contributors.
 - A running MySQL server (optional but recommended for usage logging)
 
 ## Quickstart
@@ -47,12 +50,21 @@ $env:DB_PASSWORD='your_password_here'
 $env:DB_NAME='weathersafe_db'
 ```
 
-You can also create a `.env` file and load these variables using your preferred method.
+You can also create a `.env` file and load these variables using your preferred method. Example `.env`:
+
+```env
+DB_HOST=localhost
+DB_USER=weather_user
+DB_PASSWORD=your_password_here
+DB_NAME=weathersafe_db
+```
 
 5. Run the app:
 
 ```sh
 npm start
+
+node app/server.js
 ```
 
 By default the server listens on port `3000` and serves the frontend from `app/public`.
@@ -72,6 +84,12 @@ Open: http://localhost:3000
 - `app/db.js` — MySQL integration and usage logging (creates `usage_logs` table automatically).
 - `app/public/` — static frontend (HTML/CSS/JS).
 - `app/weathersafe_schema.sql` — sanitized DB schema for import.
+
+## Screenshot
+
+Add a screenshot to `app/public/screenshot.png` (or update this path) to help users quickly see the UI. Example:
+
+![screenshot](app/public/screenshot.png)
 
 ## Notes
 

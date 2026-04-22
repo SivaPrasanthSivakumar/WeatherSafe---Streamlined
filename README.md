@@ -1,89 +1,88 @@
 # WeatherSafe
 
-## Description
+WeatherSafe is a lightweight Node.js + Express application that fetches live weather forecasts and official weather alerts for a user's location and provides a simple UI and REST endpoints for accessing that data.
 
-WeatherSafe is an extreme weather warning system that alerts users about mild or dangerous weather conditions. It also provides weather forecasts, including day, forecast description, temperature, and wind speed.
+**Key features**
 
-## Features
+- Real-time weather alerts (from government APIs where available)
+- Hourly and 7-day forecasts (via Open-Meteo)
+- Simple usage logging to a MySQL database
+- Caching for improved response times
 
-- Real-time weather alerts and forecasts.
-- Fun weather facts to keep users engaged.
-- Interactive UI elements with animations.
-- Weather-themed background music.
-- Weather-themed background music (open-source): "White Petals by Keys of Moon" included with attribution.
-- **Optimized for responsiveness and faster loading with caching.**
+## Prerequisites
 
-## Installation
+- Node.js 16+ and npm
+- A running MySQL server (optional but recommended for usage logging)
+
+## Quickstart
 
 1. Clone the repository:
-   ```sh
-   git clone https://github.com/your-username/weathersafe.git
-   cd weathersafe
-   ```
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
-3. Generate SSL certificates and place them in the `Programs/WeatherSafeApp` directory:
-   ```sh
-   openssl req -nodes -new -x509 -keyout localhost-key.pem -out localhost.pem -days 365
-   ```
-
-## Usage
-
-Start the application:
 
 ```sh
- cd WeatherSafe---Streamlined
-npm start
+git clone https://github.com/SivaPrasanthSivakumar/WeatherSafe---Streamlined.git
+cd WeatherSafe---Streamlined
 ```
 
-Access the app at [https://localhost:3000](https://localhost:3000).
+2. Install dependencies:
 
-## Configuration (.env)
-
-Copy `.env.example` to `.env` and fill in your database credentials. Do NOT commit `.env` to source control.
-
-Example (PowerShell):
-
-```powershell
-Copy-Item .env.example .env
-notepad .env
-npm start
+```sh
+npm install
 ```
 
-You can also set environment variables directly before running `npm start`:
+3. Configure the database (optional):
+
+- Create a database (example name: `weathersafe_db`).
+- Import the sanitized schema if you want the usage table:
+
+```sh
+mysql -u your_user -p weathersafe_db < app/weathersafe_schema.sql
+```
+
+4. Set environment variables (example):
 
 ```powershell
 $env:DB_HOST='localhost'
 $env:DB_USER='weather_user'
 $env:DB_PASSWORD='your_password_here'
 $env:DB_NAME='weathersafe_db'
+```
+
+You can also create a `.env` file and load these variables using your preferred method.
+
+5. Run the app:
+
+```sh
 npm start
 ```
 
-Notes:
+By default the server listens on port `3000` and serves the frontend from `app/public`.
 
-- A sanitized schema file without plaintext passwords is available at [app/weathersafe_schema.sanitized.sql](app/weathersafe_schema.sanitized.sql). The original file containing plaintext passwords has been removed from the repository for security.
-- DB error logs created at runtime are ignored via `.gitignore` (`app/db_errors.log`).
+Open: http://localhost:3000
+
+## API endpoints
+
+- `GET /api/user-weather` — returns alerts and forecast inferred from the request IP (or `?ip=`).
+- `GET /api/alerts?city=City&state=State` — returns active alerts for the specified city/state.
+- `GET /api/weather?city=City&state=State` — returns forecast data for the specified city/state.
+- `GET /api/random-fact` — returns a fun weather fact.
+
+## Files of interest
+
+- `app/server.js` — main Express server (start script points here).
+- `app/db.js` — MySQL integration and usage logging (creates `usage_logs` table automatically).
+- `app/public/` — static frontend (HTML/CSS/JS).
+- `app/weathersafe_schema.sql` — sanitized DB schema for import.
+
+## Notes
+
+- DB error logs are written to `app/db_errors.log` at runtime (this file is ignored in source control).
+- The project includes a small open-source background track used in the demo UI with attribution.
 
 ## Contributing
 
-1. Fork the repository.
-2. Create a new branch:
-   ```sh
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```sh
-   git commit -m "Add feature-name"
-   ```
-4. Push to your branch:
-   ```sh
-   git push origin feature-name
-   ```
-5. Open a pull request.
+1. Fork the repo and create a feature branch.
+2. Open a pull request describing your changes.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under MIT. See the [LICENSE](LICENSE) file for details.

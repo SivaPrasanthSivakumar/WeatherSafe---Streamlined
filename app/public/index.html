@@ -49,6 +49,19 @@
       </div>
       <div>
         <h4
+          onclick="toggleSection('daily')"
+          tabindex="0"
+          role="button"
+          aria-expanded="false"
+          aria-controls="daily"
+          onkeydown="handleSectionKey(event, 'daily')"
+        >
+          <span class="arrow">&#9654;</span> Daily Summary
+        </h4>
+        <div id="daily" class="collapsible-content"></div>
+      </div>
+      <div>
+        <h4
           onclick="toggleSection('alerts')"
           tabindex="0"
           role="button"
@@ -94,6 +107,16 @@
           }
 
           displayWeather(data.alerts, forecastList);
+          // Extract daily summaries (if provided) and show them
+          let dailyList = [];
+          if (
+            data.forecast &&
+            !Array.isArray(data.forecast) &&
+            Array.isArray(data.forecast.daily)
+          ) {
+            dailyList = data.forecast.daily;
+          }
+          displayDaily(dailyList);
           notifyMajorAlerts(data.alerts);
         } catch (error) {
           console.error("Error fetching weather data:", error);
@@ -116,8 +139,11 @@
         document.getElementById("location").textContent = "Loading...";
 
         try {
+          const encodedCity = encodeURIComponent(city);
+          const encodedState = encodeURIComponent(state);
+
           const alertsResponse = await fetch(
-            `/api/alerts?city=${city}&state=${state}`,
+            `/api/alerts?city=${encodedCity}&state=${encodedState}`,
           );
           if (!alertsResponse.ok) {
             throw new Error(`Alerts API error: ${alertsResponse.statusText}`);
@@ -126,7 +152,7 @@
           console.log("Raw Alerts API Response:", alertsData);
 
           const forecastResponse = await fetch(
-            `/api/weather?city=${city}&state=${state}`,
+            `/api/weather?city=${encodedCity}&state=${encodedState}`,
           );
           if (!forecastResponse.ok) {
             throw new Error(
@@ -155,8 +181,19 @@
             throw new Error("No valid weather data received.");
           }
 
+          // Extract daily summaries (if provided) and show them
+          let daily = [];
+          if (
+            forecastData.forecast &&
+            !Array.isArray(forecastData.forecast) &&
+            Array.isArray(forecastData.forecast.daily)
+          ) {
+            daily = forecastData.forecast.daily;
+          }
+
           document.getElementById("location").textContent = `${city}, ${state}`;
           displayWeather(alerts, forecast);
+          displayDaily(daily);
           notifyMajorAlerts(alerts);
         } catch (error) {
           console.error("Error searching weather data:", error);
@@ -278,11 +315,16 @@
                 ? `${windMph} mph from ${windCompass} (${windDesc})`
                 : "Wind: N/A";
 
-            div.innerHTML = `
-              <strong>${timeLabel}</strong>
-              <p>${period.detailedForecast || ""}</p>
-              <small>Temp: ${tempLabel} | ${windLabel}</small>
-            `;
+            const strong = document.createElement("strong");
+            strong.textContent = timeLabel;
+            const p = document.createElement("p");
+            p.textContent = period.detailedForecast || "";
+            const small = document.createElement("small");
+            small.textContent = `Temp: ${tempLabel} | ${windLabel}`;
+
+            div.appendChild(strong);
+            div.appendChild(p);
+            div.appendChild(small);
             forecastContainer.appendChild(div);
           });
         } else {
@@ -296,11 +338,17 @@
             console.log("Alert:", alert);
             const div = document.createElement("div");
             div.classList.add("alert");
-            div.innerHTML = `
-              <strong>${alert.headline}</strong>
-              <p>${alert.description}</p>
-              <small>Area: ${alert.area} | Severity: ${alert.severity} | Sent: ${alert.sent}</small>
-            `;
+
+            const strong = document.createElement("strong");
+            strong.textContent = alert.headline || "";
+            const p = document.createElement("p");
+            p.textContent = alert.description || "";
+            const small = document.createElement("small");
+            small.textContent = `Area: ${alert.area} | Severity: ${alert.severity} | Sent: ${alert.sent}`;
+
+            div.appendChild(strong);
+            div.appendChild(p);
+            div.appendChild(small);
             alertsContainer.appendChild(div);
           });
         } else {
@@ -319,28 +367,39 @@
         daily.forEach((day) => {
           const div = document.createElement("div");
           div.classList.add("forecast");
-          div.innerHTML = `
-            <strong>${day.date}</strong>
-            <p>High: ${day.maxTemp}°${day.tempUnit} — Low: ${day.minTemp}°${day.tempUnit}</p>
-            <small>Precip: ${day.precipitation} mm | Max wind: ${day.maxWindSpeed} m/s</small>
-          `;
+
+          const strong = document.createElement("strong");
+          strong.textContent = day.date || "";
+
+          const p = document.createElement("p");
+          p.textContent = `High: ${day.maxTemp}°${day.tempUnit} — Low: ${day.minTemp}°${day.tempUnit}`;
+
+          const small = document.createElement("small");
+          small.textContent = `Precip: ${day.precipitation} mm | Max wind: ${day.maxWindSpeed} mph`;
+
+          div.appendChild(strong);
+          div.appendChild(p);
+          div.appendChild(small);
           dailyContainer.appendChild(div);
         });
       }
 
       function toggleSection(sectionId) {
         const section = document.getElementById(sectionId);
+        if (!section) return;
         const header = section.previousElementSibling;
-        const arrow = header.querySelector(".arrow");
-        const isOpen = section.style.display === "block";
+        const arrow = header ? header.querySelector(".arrow") : null;
+        const isOpen = section.classList.contains(
+          "collapsible-content--expanded",
+        );
         if (!isOpen) {
-          section.style.display = "block";
-          arrow.innerHTML = "&#9660;";
-          header.setAttribute("aria-expanded", "true");
+          section.classList.add("collapsible-content--expanded");
+          if (arrow) arrow.innerHTML = "&#9660;";
+          if (header) header.setAttribute("aria-expanded", "true");
         } else {
-          section.style.display = "none";
-          arrow.innerHTML = "&#9654;";
-          header.setAttribute("aria-expanded", "false");
+          section.classList.remove("collapsible-content--expanded");
+          if (arrow) arrow.innerHTML = "&#9654;";
+          if (header) header.setAttribute("aria-expanded", "false");
         }
       }
 
@@ -390,19 +449,26 @@
 
       window.onload = () => {
         fetchWeather();
-        document.getElementById("forecast").style.display = "none";
-        document.getElementById("daily").style.display = "none";
-        document.getElementById("alerts").style.display = "none";
+        const forecastEl = document.getElementById("forecast");
+        const dailyEl = document.getElementById("daily");
+        const alertsEl = document.getElementById("alerts");
+        if (forecastEl)
+          forecastEl.classList.remove("collapsible-content--expanded");
+        if (dailyEl) dailyEl.classList.remove("collapsible-content--expanded");
+        if (alertsEl)
+          alertsEl.classList.remove("collapsible-content--expanded");
         // Set ARIA attributes for initial state
-        document
-          .querySelector("h4[aria-controls='forecast']")
-          .setAttribute("aria-expanded", "false");
-        document
-          .querySelector("h4[aria-controls='daily']")
-          .setAttribute("aria-expanded", "false");
-        document
-          .querySelector("h4[aria-controls='alerts']")
-          .setAttribute("aria-expanded", "false");
+        const headerForecast = document.querySelector(
+          "h4[aria-controls='forecast']",
+        );
+        const headerDaily = document.querySelector("h4[aria-controls='daily']");
+        const headerAlerts = document.querySelector(
+          "h4[aria-controls='alerts']",
+        );
+        if (headerForecast)
+          headerForecast.setAttribute("aria-expanded", "false");
+        if (headerDaily) headerDaily.setAttribute("aria-expanded", "false");
+        if (headerAlerts) headerAlerts.setAttribute("aria-expanded", "false");
         fetchRandomFact();
         const _btn = document.querySelector(".music-control button");
         const _music = document.getElementById("background-music");

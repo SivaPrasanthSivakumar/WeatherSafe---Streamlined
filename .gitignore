@@ -17,4 +17,4 @@ Documentation/
 Programs/WeatherSafeApp/localhost-key.pem
 Programs/WeatherSafeApp/localhost.pem
 .env
-Programs/WeatherSafeApp/db_errors.log
+app/db_errors.log

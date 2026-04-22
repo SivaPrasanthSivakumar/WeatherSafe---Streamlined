@@ -14,12 +14,24 @@ const pool = mysql.createPool({
 
 const logPath = path.join(__dirname, "db_errors.log");
 
+function sanitizeContext(context = {}) {
+  const copy = { ...context };
+  const redacted = "[REDACTED]";
+  if (copy.ip) copy.ip = redacted;
+  if (copy.lat) copy.lat = redacted;
+  if (copy.lon) copy.lon = redacted;
+  if (copy.city) copy.city = redacted;
+  if (copy.state) copy.state = redacted;
+  return copy;
+}
+
 async function logDbError(message, err, context = {}) {
+  const sanitizedContext = sanitizeContext(context);
   const entry = {
     ts: new Date().toISOString(),
     message,
     error: err && (err.message || String(err)),
-    context,
+    context: sanitizedContext,
   };
   try {
     await fs.promises.appendFile(logPath, JSON.stringify(entry) + "\n");
@@ -48,6 +60,19 @@ async function ensureTable() {
     throw err;
   }
 }
+let tableEnsured = false;
+
+(async () => {
+  try {
+    await ensureTable();
+    tableEnsured = true;
+  } catch (e) {
+    console.error(
+      "Failed to ensure usage_logs table at startup:",
+      e && e.message,
+    );
+  }
+})();
 
 async function saveUsage({
   ip,
@@ -60,7 +85,10 @@ async function saveUsage({
   raw = {},
 } = {}) {
   try {
-    await ensureTable();
+    if (!tableEnsured) {
+      await ensureTable();
+      tableEnsured = true;
+    }
     const insertSQL =
       "INSERT INTO usage_logs (ip, city, state, lat, lon, alerts_count, forecast_count, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     const rawJson = JSON.stringify(raw || {});

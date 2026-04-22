@@ -50,7 +50,8 @@ async function getLatLonFromCityState(city, state) {
   }
 
   try {
-    const apiUrl = `https://nominatim.openstreetmap.org/search?city=${city}&state=${state}&format=json`;
+    const params = new URLSearchParams({ city, state, format: "json" });
+    const apiUrl = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
     const { data } = await axios.get(apiUrl, {
       headers: {
         "User-Agent":
@@ -132,15 +133,15 @@ async function getWeatherForecast(latitude, longitude) {
 
     const forecastHourly = [];
     // Build simple hourly periods (limit to first 24 entries) and convert temps to F
-    // convert wind speeds from m/s to mph for readability
-    const mpsToMph = (m) => (m == null ? null : Math.round(m * 2.23694));
+    // convert wind speeds from km/h to mph for readability
+    const kmhToMph = (k) => (k == null ? null : Math.round(k * 0.621371));
 
     for (let i = 0; i < Math.min(24, times.length); i++) {
       forecastHourly.push({
         time: times[i],
         temp: temps[i] != null ? cToF(temps[i]) : null,
         tempUnit: "F",
-        windSpeed: mpsToMph(winds[i]),
+        windSpeed: kmhToMph(winds[i]),
         windDir: winddirs[i] != null ? winddirs[i] : null,
         detailedForecast: "",
       });
@@ -162,7 +163,7 @@ async function getWeatherForecast(latitude, longitude) {
           maxTemp: tmax[i] != null ? cToF(tmax[i]) : null,
           minTemp: tmin[i] != null ? cToF(tmin[i]) : null,
           precipitation: precip[i] != null ? precip[i] : 0,
-          maxWindSpeed: mpsToMph(windmax[i]),
+          maxWindSpeed: kmhToMph(windmax[i]),
           tempUnit: "F",
         });
       }
@@ -176,7 +177,7 @@ async function getWeatherForecast(latitude, longitude) {
       `Error fetching weather forecast for ${latitude}, ${longitude}:`,
       error.message,
     );
-    return [];
+    return { hourly: [], daily: [] };
   }
 }
 
@@ -190,6 +191,14 @@ app.get("/api/user-weather", async (req, res) => {
 
       const ipAddr =
         req.query.ip || req.ip || req.headers["x-forwarded-for"] || null;
+      const fcHourly =
+        forecast && forecast.hourly && Array.isArray(forecast.hourly)
+          ? forecast.hourly.length
+          : 0;
+      const fcDaily =
+        forecast && forecast.daily && Array.isArray(forecast.daily)
+          ? forecast.daily.length
+          : 0;
       db.saveUsage({
         ip: ipAddr,
         city,
@@ -197,7 +206,7 @@ app.get("/api/user-weather", async (req, res) => {
         lat,
         lon,
         alertsCount: Array.isArray(alerts) ? alerts.length : 0,
-        forecastCount: Array.isArray(forecast) ? forecast.length : 0,
+        forecastCount: fcHourly + fcDaily,
         raw: { query: req.query },
       }).catch((err) => {
         console.error("DB save failed (logged):", err && (err.message || err));

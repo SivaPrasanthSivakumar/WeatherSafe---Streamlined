@@ -202,16 +202,30 @@
         }
       }
 
-      function notifyMajorAlerts(alerts) {
+      async function notifyMajorAlerts(alerts) {
         console.log("Alerts passed to notifyMajorAlerts:", alerts);
         if (!Array.isArray(alerts) || alerts.length === 0) {
           console.warn("No valid alerts to process in notifyMajorAlerts.");
           return;
         }
 
-        if (Notification.permission !== "granted") {
-          console.warn("Notifications are not enabled.");
+        if (typeof Notification === "undefined") {
+          console.warn("Notifications are not supported in this browser.");
           return;
+        }
+
+        if (Notification.permission !== "granted") {
+          try {
+            const perm = await Notification.requestPermission();
+            console.log("Notification permission result:", perm);
+            if (perm !== "granted") {
+              console.warn("Notifications permission denied by user.");
+              return;
+            }
+          } catch (err) {
+            console.warn("Notification permission request failed:", err);
+            return;
+          }
         }
 
         let redAlert = false;
@@ -469,6 +483,15 @@
           headerForecast.setAttribute("aria-expanded", "false");
         if (headerDaily) headerDaily.setAttribute("aria-expanded", "false");
         if (headerAlerts) headerAlerts.setAttribute("aria-expanded", "false");
+        // Request notification permission on load so users can receive alerts
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission !== "granted"
+        ) {
+          Notification.requestPermission().then((perm) => {
+            console.log("Notification permission on load:", perm);
+          });
+        }
         fetchRandomFact();
         const _btn = document.querySelector(".music-control button");
         const _music = document.getElementById("background-music");

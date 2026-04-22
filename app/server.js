@@ -7,7 +7,7 @@ const fs = require("fs");
 const db = require("./db");
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const cache = new NodeCache({ stdTTL: 3600 });
 
 app.use(cors());
@@ -290,6 +290,17 @@ app.get("/api/random-fact", (req, res) => {
   res.json({ fact: randomFact });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`WeatherSafe app is listening at http://localhost:${port}`);
+});
+
+server.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE") {
+    console.error(
+      `Port ${port} is already in use. Stop the process using that port or set a different PORT environment variable.`,
+    );
+    process.exit(1);
+  }
+  console.error("Server error:", err);
+  process.exit(1);
 });

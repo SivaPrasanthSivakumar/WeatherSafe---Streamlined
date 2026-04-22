@@ -10,11 +10,11 @@ body {
   color: #333;
   line-height: 1.6;
   padding: 2%;
-  background-attachment: fixed;
 }
 
 .container {
-  max-width: 100%;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   background-color: #ffffff;
   padding: 3%;
@@ -161,18 +161,18 @@ h3 {
   }
 }
 
-.Extreme,
-.Severe {
+.severity-extreme,
+.severity-severe {
   background-color: #ff7f71;
   color: #fff;
 }
 
-.Moderate {
+.severity-moderate {
   background-color: #f1c40f;
   color: #fff;
 }
 
-.Minor {
+.severity-minor {
   background-color: #2ecc71;
   color: #fff;
 }
@@ -235,10 +235,6 @@ h4:hover {
 
 button {
   transition: transform 0.2s ease;
-}
-
-button:hover {
-  transform: scale(1.05);
 }
 
 .music-control {

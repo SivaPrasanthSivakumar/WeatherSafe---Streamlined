@@ -140,7 +140,7 @@ async function saveUsage({
     }
     const insertSQL =
       "INSERT INTO usage_logs (ip, city, state, lat, lon, alerts_count, forecast_count, raw) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    const rawJson = JSON.stringify(raw || {});
+    const rawJson = JSON.stringify(raw);
     await pool.execute(insertSQL, [
       ip,
       city,

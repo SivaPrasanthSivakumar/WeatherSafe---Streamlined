@@ -79,11 +79,18 @@
       </div>
     </div>
     <script>
+      // Debugging helper: enable with ?debug=1 or on localhost. Defaults to false in production.
+      const DEBUG =
+        new URLSearchParams(window.location.search).get("debug") === "1" ||
+        window.location.hostname === "localhost";
+      function dbg(...args) {
+        if (DEBUG) console.log(...args);
+      }
       async function fetchWeather() {
         try {
           const ipResponse = await fetch("https://api.ipify.org?format=json");
           const ipData = await ipResponse.json();
-          console.log("IP Data:", ipData);
+          dbg("IP Data:", ipData);
 
           const response = await fetch(`/api/user-weather?ip=${ipData.ip}`);
           const data = await response.json();
@@ -149,7 +156,7 @@
             throw new Error(`Alerts API error: ${alertsResponse.statusText}`);
           }
           const alertsData = await alertsResponse.json();
-          console.log("Raw Alerts API Response:", alertsData);
+          dbg("Raw Alerts API Response:", alertsData);
 
           const forecastResponse = await fetch(
             `/api/weather?city=${encodedCity}&state=${encodedState}`,
@@ -160,13 +167,13 @@
             );
           }
           const forecastData = await forecastResponse.json();
-          console.log("Raw Forecast API Response:", forecastData);
+          dbg("Raw Forecast API Response:", forecastData);
 
           // Validate API response structure
           const alerts = Array.isArray(alertsData.alerts)
             ? alertsData.alerts
             : [];
-          console.log("Validated Alerts Data:", alerts);
+          dbg("Validated Alerts Data:", alerts);
           let forecast = [];
           if (forecastData.forecast) {
             if (Array.isArray(forecastData.forecast)) {
@@ -175,7 +182,7 @@
               forecast = forecastData.forecast.hourly;
             }
           }
-          console.log("Validated Forecast Data:", forecast);
+          dbg("Validated Forecast Data:", forecast);
 
           if (alerts.length === 0 && forecast.length === 0) {
             throw new Error("No valid weather data received.");
@@ -203,7 +210,7 @@
       }
 
       async function notifyMajorAlerts(alerts) {
-        console.log("Alerts passed to notifyMajorAlerts:", alerts);
+        dbg("Alerts passed to notifyMajorAlerts:", alerts);
         if (!Array.isArray(alerts) || alerts.length === 0) {
           console.warn("No valid alerts to process in notifyMajorAlerts.");
           return;
@@ -217,7 +224,7 @@
         if (Notification.permission !== "granted") {
           try {
             const perm = await Notification.requestPermission();
-            console.log("Notification permission result:", perm);
+            dbg("Notification permission result:", perm);
             if (perm !== "granted") {
               console.warn("Notifications permission denied by user.");
               return;
@@ -231,7 +238,7 @@
         let redAlert = false;
         let yellowAlert = false;
         alerts.forEach((alert) => {
-          console.log("Processing alert:", alert);
+          dbg("Processing alert:", alert);
           if (alert.severity === "Severe" || alert.severity === "Extreme") {
             redAlert = true;
           } else if (alert.severity === "Moderate") {
@@ -303,14 +310,14 @@
       }
 
       function displayWeather(alerts, forecast) {
-        console.log("Forecast:", forecast);
-        console.log("Alerts:", alerts);
+        dbg("Forecast:", forecast);
+        dbg("Alerts:", alerts);
 
         const forecastContainer = document.getElementById("forecast");
         forecastContainer.innerHTML = "";
         if (Array.isArray(forecast) && forecast.length > 0) {
           forecast.forEach((period) => {
-            console.log("Period:", period);
+            dbg("Period:", period);
             const div = document.createElement("div");
             div.classList.add("forecast");
 
@@ -349,9 +356,18 @@
         alertsContainer.innerHTML = "";
         if (Array.isArray(alerts) && alerts.length > 0) {
           alerts.forEach((alert) => {
-            console.log("Alert:", alert);
+            dbg("Alert:", alert);
             const div = document.createElement("div");
             div.classList.add("alert");
+            // Add a standardized severity class for styling (e.g., severity-severe).
+            if (alert.severity) {
+              const sev = String(alert.severity)
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-_]/g, "");
+              if (sev) div.classList.add(`severity-${sev}`);
+            }
 
             const strong = document.createElement("strong");
             strong.textContent = alert.headline || "";
@@ -489,7 +505,7 @@
           Notification.permission !== "granted"
         ) {
           Notification.requestPermission().then((perm) => {
-            console.log("Notification permission on load:", perm);
+            dbg("Notification permission on load:", perm);
           });
         }
         fetchRandomFact();

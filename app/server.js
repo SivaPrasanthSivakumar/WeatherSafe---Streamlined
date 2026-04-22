@@ -1,9 +1,14 @@
 const express = require("express");
 const axios = require("axios");
+// Shared axios instance with a sensible default timeout to avoid hanging external calls.
+const axiosInstance = axios.create({
+  timeout: process.env.AXIOS_TIMEOUT
+    ? parseInt(process.env.AXIOS_TIMEOUT, 10)
+    : 5000,
+});
 const path = require("path");
 const cors = require("cors");
 const NodeCache = require("node-cache");
-const fs = require("fs");
 const db = require("./db");
 
 const app = express();
@@ -14,13 +19,18 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, "public"), { maxAge: "1d" }));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+// Delay (ms) used to throttle requests to external weather APIs on cache misses.
+// Configure with WEATHER_API_DELAY_MS (set to 0 to disable delay, useful for tests).
+const WEATHER_API_DELAY_MS = process.env.WEATHER_API_DELAY_MS
+  ? parseInt(process.env.WEATHER_API_DELAY_MS, 10)
+  : 1000;
 
 async function getLocationFromIP(ipAddress) {
   try {
     const target = ipAddress
       ? `https://ipapi.co/${ipAddress}/json/`
       : `https://ipapi.co/json/`;
-    const { data: locationData } = await axios.get(target, {
+    const { data: locationData } = await axiosInstance.get(target, {
       headers: {
         "User-Agent":
           "WeatherSafeApp/1.0 (https://github.com/SivaPrasanthSivakumar/WeatherSafe---Streamlined)",
@@ -52,7 +62,7 @@ async function getLatLonFromCityState(city, state) {
   try {
     const params = new URLSearchParams({ city, state, format: "json" });
     const apiUrl = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-    const { data } = await axios.get(apiUrl, {
+    const { data } = await axiosInstance.get(apiUrl, {
       headers: {
         "User-Agent":
           "WeatherSafeApp/1.0 (https://github.com/SivaPrasanthSivakumar/WeatherSafe---Streamlined)",
@@ -86,8 +96,8 @@ async function getWeatherAlerts(latitude, longitude) {
   }
 
   try {
-    await sleep(1000);
-    const { data } = await axios.get(
+    if (WEATHER_API_DELAY_MS > 0) await sleep(WEATHER_API_DELAY_MS);
+    const { data } = await axiosInstance.get(
       `https://api.weather.gov/alerts?point=${latitude},${longitude}`,
     );
     const alerts = data.features.map((alert) => ({
@@ -119,7 +129,7 @@ async function getWeatherForecast(latitude, longitude) {
 
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,windspeed_10m,winddirection_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&timezone=auto&forecast_days=7`;
-    const { data } = await axios.get(url, {
+    const { data } = await axiosInstance.get(url, {
       headers: { "User-Agent": "WeatherSafeApp/1.0" },
     });
     const hours = data.hourly || {};

@@ -3,6 +3,8 @@ const axios = require("axios");
 const path = require("path");
 const cors = require("cors");
 const NodeCache = require("node-cache");
+const fs = require("fs");
+const db = require("./db");
 
 const app = express();
 const port = 3000;
@@ -15,26 +17,26 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function getLocationFromIP(ipAddress) {
   try {
-    const { data: locationData } = await axios.get(
-      `http://ip-api.com/json/${ipAddress}`,
-      {
-        headers: {
-          "User-Agent": "WeatherSafeApp/1.0",
-        },
+    const target = ipAddress
+      ? `https://ipapi.co/${ipAddress}/json/`
+      : `https://ipapi.co/json/`;
+    const { data: locationData } = await axios.get(target, {
+      headers: {
+        "User-Agent":
+          "WeatherSafeApp/1.0 (https://github.com/SivaPrasanthSivakumar/WeatherSafe---Streamlined)",
       },
-    );
-    if (locationData.status === "success") {
+    });
+    // ipapi.co returns latitude/longitude fields
+    if (locationData) {
       return {
-        city: locationData.city,
-        state: locationData.regionName,
-        lat: locationData.lat,
-        lon: locationData.lon,
+        city: locationData.city || null,
+        state: locationData.region || locationData.region_code || null,
+        lat: locationData.latitude || locationData.lat || null,
+        lon: locationData.longitude || locationData.lon || null,
       };
-    } else {
-      console.error("IP location service returned an error:", locationData);
     }
   } catch (error) {
-    console.error("Error fetching user location from ip-api:", error.message);
+    console.error("Error fetching user location from ipapi.co:", error.message);
   }
   return null;
 }
@@ -51,7 +53,8 @@ async function getLatLonFromCityState(city, state) {
     const apiUrl = `https://nominatim.openstreetmap.org/search?city=${city}&state=${state}&format=json`;
     const { data } = await axios.get(apiUrl, {
       headers: {
-        "User-Agent": "WeatherSafeApp/1.0 (https://example.com/contact)",
+        "User-Agent":
+          "WeatherSafeApp/1.0 (https://github.com/SivaPrasanthSivakumar/WeatherSafe---Streamlined)",
       },
     });
     if (data.length > 0) {
@@ -114,23 +117,60 @@ async function getWeatherForecast(latitude, longitude) {
   }
 
   try {
-    await sleep(1000);
-    const { data } = await axios.get(
-      `https://api.weather.gov/points/${latitude},${longitude}`,
-    );
-    const forecastUrl = data.properties.forecast;
-    const { data: forecastData } = await axios.get(forecastUrl);
-    const forecast = forecastData.properties.periods.map((period) => ({
-      time: period.name,
-      temp: period.temperature,
-      tempUnit: period.temperatureUnit,
-      windSpeed: parseFloat(period.windSpeed.split(" ")[0]),
-      windDir: period.windDirection,
-      detailedForecast: period.detailedForecast || "No forecast available",
-    }));
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,windspeed_10m,winddirection_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&timezone=auto&forecast_days=7`;
+    const { data } = await axios.get(url, {
+      headers: { "User-Agent": "WeatherSafeApp/1.0" },
+    });
+    const hours = data.hourly || {};
+    const times = hours.time || [];
+    const temps = hours.temperature_2m || [];
+    const winds = hours.windspeed_10m || [];
+    const winddirs = hours.winddirection_10m || [];
 
-    cache.set(cacheKey, forecast);
-    return forecast;
+    // Convert Celsius to Fahrenheit helper
+    const cToF = (c) => (c == null ? null : Math.round((c * 9) / 5 + 32));
+
+    const forecastHourly = [];
+    // Build simple hourly periods (limit to first 24 entries) and convert temps to F
+    // convert wind speeds from m/s to mph for readability
+    const mpsToMph = (m) => (m == null ? null : Math.round(m * 2.23694));
+
+    for (let i = 0; i < Math.min(24, times.length); i++) {
+      forecastHourly.push({
+        time: times[i],
+        temp: temps[i] != null ? cToF(temps[i]) : null,
+        tempUnit: "F",
+        windSpeed: mpsToMph(winds[i]),
+        windDir: winddirs[i] != null ? winddirs[i] : null,
+        detailedForecast: "",
+      });
+    }
+
+    // Daily summaries
+    const daily = [];
+    if (data.daily) {
+      const d = data.daily;
+      const days = d.time || [];
+      const tmax = d.temperature_2m_max || [];
+      const tmin = d.temperature_2m_min || [];
+      const precip = d.precipitation_sum || [];
+      const windmax = d.windspeed_10m_max || [];
+
+      for (let i = 0; i < days.length; i++) {
+        daily.push({
+          date: days[i],
+          maxTemp: tmax[i] != null ? cToF(tmax[i]) : null,
+          minTemp: tmin[i] != null ? cToF(tmin[i]) : null,
+          precipitation: precip[i] != null ? precip[i] : 0,
+          maxWindSpeed: mpsToMph(windmax[i]),
+          tempUnit: "F",
+        });
+      }
+    }
+
+    const result = { hourly: forecastHourly, daily };
+    cache.set(cacheKey, result);
+    return result;
   } catch (error) {
     console.error(
       `Error fetching weather forecast for ${latitude}, ${longitude}:`,
@@ -147,6 +187,21 @@ app.get("/api/user-weather", async (req, res) => {
       const { city, state, lat, lon } = location;
       const alerts = await getWeatherAlerts(lat, lon);
       const forecast = await getWeatherForecast(lat, lon);
+
+      const ipAddr =
+        req.query.ip || req.ip || req.headers["x-forwarded-for"] || null;
+      db.saveUsage({
+        ip: ipAddr,
+        city,
+        state,
+        lat,
+        lon,
+        alertsCount: Array.isArray(alerts) ? alerts.length : 0,
+        forecastCount: Array.isArray(forecast) ? forecast.length : 0,
+        raw: { query: req.query },
+      }).catch((err) => {
+        console.error("DB save failed (logged):", err && (err.message || err));
+      });
 
       res.json({
         location: { city, state },

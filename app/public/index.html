@@ -10,7 +10,7 @@
     <div class="music-control">
       <button onclick="toggleMusic()">Background Music 🎵</button>
     </div>
-    <audio id="background-music" loop>
+    <audio id="background-music" loop preload="auto">
       <source src="White Petals by Keys of Moon.mp3" type="audio/mpeg" />
       Your browser does not support the audio element.
     </audio>
@@ -43,7 +43,7 @@
           aria-controls="forecast"
           onkeydown="handleSectionKey(event, 'forecast')"
         >
-          <span class="arrow">&#9654;</span> Weather Forecast
+          <span class="arrow">&#9654;</span> Hourly Forecast
         </h4>
         <div id="forecast" class="collapsible-content"></div>
       </div>
@@ -84,7 +84,16 @@
           const { city, state } = data.location;
           document.getElementById("location").textContent = `${city}, ${state}`;
 
-          displayWeather(data.alerts, data.forecast);
+          let forecastList = [];
+          if (data.forecast) {
+            if (Array.isArray(data.forecast)) {
+              forecastList = data.forecast;
+            } else if (data.forecast.hourly) {
+              forecastList = data.forecast.hourly;
+            }
+          }
+
+          displayWeather(data.alerts, forecastList);
           notifyMajorAlerts(data.alerts);
         } catch (error) {
           console.error("Error fetching weather data:", error);
@@ -132,9 +141,14 @@
             ? alertsData.alerts
             : [];
           console.log("Validated Alerts Data:", alerts);
-          const forecast = Array.isArray(forecastData.forecast)
-            ? forecastData.forecast
-            : [];
+          let forecast = [];
+          if (forecastData.forecast) {
+            if (Array.isArray(forecastData.forecast)) {
+              forecast = forecastData.forecast;
+            } else if (forecastData.forecast.hourly) {
+              forecast = forecastData.forecast.hourly;
+            }
+          }
           console.log("Validated Forecast Data:", forecast);
 
           if (alerts.length === 0 && forecast.length === 0) {
@@ -185,6 +199,58 @@
         }
       }
 
+      // Note: server now returns wind speeds in mph
+
+      // Helper: convert degrees to compass direction (16-point)
+      function degToCompass(num) {
+        if (num == null || isNaN(num)) return "Variable";
+        const val = Math.floor(num / 22.5 + 0.5);
+        const arr = [
+          "N",
+          "NNE",
+          "NE",
+          "ENE",
+          "E",
+          "ESE",
+          "SE",
+          "SSE",
+          "S",
+          "SSW",
+          "SW",
+          "WSW",
+          "W",
+          "WNW",
+          "NW",
+          "NNW",
+        ];
+        return arr[val % 16];
+      }
+
+      // Helper: describe wind by mph
+      function windDescription(mph) {
+        if (mph == null || isNaN(mph)) return "Calm/variable";
+        if (mph <= 3) return "Calm";
+        if (mph <= 7) return "Light breeze";
+        if (mph <= 12) return "Gentle breeze";
+        if (mph <= 18) return "Moderate breeze";
+        if (mph <= 24) return "Fresh breeze";
+        if (mph <= 31) return "Strong breeze";
+        return "High winds";
+      }
+
+      // Helper: format ISO time to readable hour (local)
+      function formatHour(iso) {
+        try {
+          const dt = new Date(iso);
+          return dt.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "numeric",
+          });
+        } catch (e) {
+          return iso;
+        }
+      }
+
       function displayWeather(alerts, forecast) {
         console.log("Forecast:", forecast);
         console.log("Alerts:", alerts);
@@ -196,10 +262,26 @@
             console.log("Period:", period);
             const div = document.createElement("div");
             div.classList.add("forecast");
+
+            const timeLabel = formatHour(period.time);
+            const tempLabel =
+              period.temp != null ? `${period.temp}°${period.tempUnit}` : "N/A";
+
+            // Server provides wind in mph already
+            const windMph =
+              period.windSpeed != null ? Math.round(period.windSpeed) : null;
+            const windCompass = degToCompass(period.windDir);
+            const windDesc = windDescription(windMph);
+
+            const windLabel =
+              windMph != null
+                ? `${windMph} mph from ${windCompass} (${windDesc})`
+                : "Wind: N/A";
+
             div.innerHTML = `
-              <strong>${period.time}</strong>
-              <p>${period.detailedForecast}</p>
-              <small>Temp: ${period.temp} ${period.tempUnit} | Wind: ${period.windSpeed} ${period.windDir}</small>
+              <strong>${timeLabel}</strong>
+              <p>${period.detailedForecast || ""}</p>
+              <small>Temp: ${tempLabel} | ${windLabel}</small>
             `;
             forecastContainer.appendChild(div);
           });
@@ -224,6 +306,26 @@
         } else {
           alertsContainer.textContent = "No weather alerts available.";
         }
+      }
+
+      function displayDaily(daily) {
+        const dailyContainer = document.getElementById("daily");
+        dailyContainer.innerHTML = "";
+        if (!Array.isArray(daily) || daily.length === 0) {
+          dailyContainer.textContent = "No daily summary available.";
+          return;
+        }
+
+        daily.forEach((day) => {
+          const div = document.createElement("div");
+          div.classList.add("forecast");
+          div.innerHTML = `
+            <strong>${day.date}</strong>
+            <p>High: ${day.maxTemp}°${day.tempUnit} — Low: ${day.minTemp}°${day.tempUnit}</p>
+            <small>Precip: ${day.precipitation} mm | Max wind: ${day.maxWindSpeed} m/s</small>
+          `;
+          dailyContainer.appendChild(div);
+        });
       }
 
       function toggleSection(sectionId) {
@@ -267,27 +369,47 @@
         }
       }
 
-      function toggleMusic() {
+      async function toggleMusic() {
         const music = document.getElementById("background-music");
-        if (music.paused) {
-          music.play();
-        } else {
-          music.pause();
+        const btn = document.querySelector(".music-control button");
+        try {
+          if (music.paused) {
+            await music.play();
+            if (btn) btn.textContent = "Pause Music ⏸️";
+          } else {
+            music.pause();
+            if (btn) btn.textContent = "Background Music 🎵";
+          }
+        } catch (err) {
+          console.error("Music play error:", err);
+          alert(
+            "Unable to play audio. The browser may block playback or the file may be unavailable.",
+          );
         }
       }
 
       window.onload = () => {
         fetchWeather();
         document.getElementById("forecast").style.display = "none";
+        document.getElementById("daily").style.display = "none";
         document.getElementById("alerts").style.display = "none";
         // Set ARIA attributes for initial state
         document
           .querySelector("h4[aria-controls='forecast']")
           .setAttribute("aria-expanded", "false");
         document
+          .querySelector("h4[aria-controls='daily']")
+          .setAttribute("aria-expanded", "false");
+        document
           .querySelector("h4[aria-controls='alerts']")
           .setAttribute("aria-expanded", "false");
         fetchRandomFact();
+        const _btn = document.querySelector(".music-control button");
+        const _music = document.getElementById("background-music");
+        if (_btn && _music)
+          _btn.textContent = _music.paused
+            ? "Background Music 🎵"
+            : "Pause Music ⏸️";
       };
     </script>
   </body>

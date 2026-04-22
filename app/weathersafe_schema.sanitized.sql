@@ -1,4 +1,4 @@
--- SQL script to create the WeatherSafe database and users
+-- Sanitized SQL script for WeatherSafe (password placeholders)
 
 CREATE DATABASE IF NOT EXISTS weathersafe_db;
 USE weathersafe_db;
@@ -25,11 +25,12 @@ CREATE TABLE IF NOT EXISTS weather_alerts (
 DROP USER IF EXISTS 'weather_user'@'localhost';
 DROP USER IF EXISTS 'weather_admin'@'localhost';
 
--- Create or replace users
-CREATE OR REPLACE USER 'weather_user'@'localhost' IDENTIFIED BY 'passwordWEATHER@123';
+-- Create users (replace placeholders with secure passwords before running)
+-- Note: do NOT commit real passwords to source control.
+CREATE OR REPLACE USER 'weather_user'@'localhost' IDENTIFIED BY '<WEATHER_USER_PASSWORD>';
 GRANT SELECT, INSERT, UPDATE ON weathersafe_db.* TO 'weather_user'@'localhost';
 
-CREATE OR REPLACE USER 'weather_admin'@'localhost' IDENTIFIED BY 'passwordADMIN@456';
+CREATE OR REPLACE USER 'weather_admin'@'localhost' IDENTIFIED BY '<WEATHER_ADMIN_PASSWORD>';
 GRANT ALL PRIVILEGES ON weathersafe_db.* TO 'weather_admin'@'localhost';
 
 FLUSH PRIVILEGES;
